@@ -124,9 +124,11 @@ The infrastructure has been tested with the following system configuration:
 0. Install the megatools executable
 
     ```bash
+    export PYTHIA_HOME=/home/lisa/Pythia/
     cd $PYTHIA_HOME/scripts
-    wget https://megatools.megous.com/builds/experimental/megatools-1.11.0-git-20220401-linux-x86_64.tar.gz
-    tar -xvf megatools-1.11.0-git-20220401-linux-x86_64.tar.gz
+    <!-- wget https://megatools.megous.com/builds/experimental/megatools-1.11.0-git-20220401-linux-x86_64.tar.gz -->
+    wget https://megatools.megous.com/builds/megatools-1.11.0.20220519.tar.gz
+    tar -xvf megatools-1.11.0.20220519.tar.gz
     ```
 > Note: The megatools link might change in the future depending on latest release. Please recheck the link if the download fails.
 

@@ -1,0 +1,114 @@
+megatools(1)
+============
+
+NAME
+----
+megatools - Mega.nz command line tools
+
+
+SYNOPSIS
+--------
+[verse]
+'megatools df' [--free|--total|--used] [--mb|--gb|-h]
+'megatools ls' [-e] [-h] [--header] [-l] [-R] [-n] [<remotepaths>...]
+'megatools test' [-f|-d] <remotepaths>...
+'megatools export' <remotepaths>...
+'megatools put' [--no-progress] [--path <remotepath>] <paths>...
+'megatools mkdir' <remotepaths>...
+'megatools mkdir' /Contacts/<contactemail>
+'megatools get' [--no-progress] [--path <path>] <remotepaths>...
+'megatools get' --path - <remotefile>
+'megatools copy' [-n] [--no-progress] --local <path> --remote <remotepath>
+'megatools copy' [-n] [--no-progress] --download --local <path> --remote <remotepath>
+'megatools rm' <remotepaths>...
+'megatools rm' /Contacts/<contactemail>
+'megatools dl' [--no-progress] [--path <path>] <links>...
+'megatools dl' --path - <filelink>
+'megatools reg' [--scripted] --register --email <email> --name <realname> --password <password>
+'megatools reg' [--scripted] --verify <state> <link>
+
+
+DESCRIPTION
+-----------
+
+Megatools is a collection of programs for accessing Mega service from 
+a command line of your desktop or server.
+
+Megatools allow you to copy individual files as well as entire directory 
+trees to and from the cloud. You can also perform streaming downloads for 
+example to preview videos and audio files, without needing to download 
+the entire file.
+
+Megatools are robust and optimized for fast operation - as fast as Mega 
+servers allow. Memory requirements and CPU utilization are kept at minimum.
+
+You can register account using a man:megatools-reg[1] tool, with the benefit of having 
+true control of your encryption keys.
+
+Mega website can be found at http://mega.nz.
+
+Megatools can be downloaded at http://megatools.megous.com
+
+
+TOOLS OVERVIEW
+--------------
+
+man:megatools-reg[1]::
+	Register and verify a new mega account
+
+man:megatools-df[1]::
+	Show your cloud storage space usage/quota
+
+man:megatools-ls[1]::
+	List all remote files
+
+man:megatools-test[1]::
+	Test for existence of files or folders
+
+man:megatools-export[1]::
+	Create public links for remote files
+
+man:megatools-mkdir[1]::
+	Create remote directory
+
+man:megatools-rm[1]::
+	Remove remote file or directory
+
+man:megatools-put[1]::
+	Upload individual files
+
+man:megatools-get[1]::
+	Download individual files
+
+man:megatools-dl[1]::
+	Download file from a "public" Mega link (doesn't require login)
+
+man:megatools-copy[1]::
+	Upload or download a directory tree
+
+
+CONFIGURATION FILES
+-------------------
+
+See man:megarc[5] for information about mega configuration file.
+
+
+
+Each of the individual tools have help that can be accessed using --help
+parameter.
+
+
+
+
+SESSION CACHE
+-------------
+
+If you modify cloud filesystem from the Mega.nz website or from another computer,
+you'll need to refresh your session cache. This can be done by using the
+--reload option to any tool, or by waiting for a cache timeout (default timeout is set to 10 minutes).
+
+
+
+include::remote-paths.txt[]
+
+include::footer.txt[]
