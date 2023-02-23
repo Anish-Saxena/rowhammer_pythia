@@ -2,7 +2,7 @@
 
 // initialized in main.cc
 uint32_t DRAM_MTPS, DRAM_DBUS_RETURN_TIME, DRAM_DBUS_MAX_CAS,
-         tRP, tRCD, tCAS;
+         tRP, tRCD, tCAS, tCXL;
 
 void print_dram_config()
 {
@@ -18,6 +18,7 @@ void print_dram_config()
         << "min_dram_writes_per_switch " << MIN_DRAM_WRITES_PER_SWITCH << endl
         << "dram_mtps " << DRAM_MTPS << endl
         << "dram_dbus_return_time " << DRAM_DBUS_RETURN_TIME << endl
+        << "tCXL" << tCXL_DRAM_NANOSECONDS << endl
         << endl;
 }
 
@@ -234,7 +235,7 @@ void MEMORY_CONTROLLER::schedule(PACKET_QUEUE *queue)
     // at this point, the scheduler knows which bank to access and if the request is a row buffer hit or miss
     if (oldest_index != -1) { // scheduler might not find anything if all requests are already scheduled or all banks are busy
 
-        uint64_t LATENCY = 0;
+        uint64_t LATENCY = tCXL;
         if (row_buffer_hit)  
             LATENCY = tCAS;
         else 
