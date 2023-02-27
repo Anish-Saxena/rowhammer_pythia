@@ -641,6 +641,7 @@ int main(int argc, char** argv)
     tRP  = (uint32_t)((1.0 * tRP_DRAM_NANOSECONDS  * CPU_FREQ) / 1000);
     tRCD = (uint32_t)((1.0 * tRCD_DRAM_NANOSECONDS * CPU_FREQ) / 1000);
     tCAS = (uint32_t)((1.0 * tCAS_DRAM_NANOSECONDS * CPU_FREQ) / 1000);
+    tCXL = (uint32_t)((1.0 * tCXL_DRAM_NANOSECONDS * CPU_FREQ) / 1000);
 
     // default: 16 = (64 / 8) * (3200 / 1600)
     // it takes 16 CPU cycles to tranfser 64B cache block on a 8B (64-bit) bus

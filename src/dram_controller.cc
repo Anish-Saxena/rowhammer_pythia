@@ -1,5 +1,15 @@
 #include "dram_controller.h"
 
+/**************************************************
+* CXL memory addressing:
+* We have 4 channels- 1 DDR and 3 CXL
+* DDR channel serves addr 0 to DRAM_SIZE/4
+* CXL channels serve addr DRAM_SIZE/4 to DRAM_SIZE
+* We need two addressing schemes to ensure accesses are interleaved across channels for CXL
+* If addr < DRAM_SIZE/4 => use default addressing with channel = 0
+* If addre > DRAM_SIZE/4 => use CXL addressing with channel = {1, 2, 3}
+* The delay is added depending on channelID (0 for Ch0, 30ns for Ch1-3)
+**************************************************/
 // initialized in main.cc
 uint32_t DRAM_MTPS, DRAM_DBUS_RETURN_TIME, DRAM_DBUS_MAX_CAS,
          tRP, tRCD, tCAS, tCXL;
@@ -235,11 +245,14 @@ void MEMORY_CONTROLLER::schedule(PACKET_QUEUE *queue)
     // at this point, the scheduler knows which bank to access and if the request is a row buffer hit or miss
     if (oldest_index != -1) { // scheduler might not find anything if all requests are already scheduled or all banks are busy
 
-        uint64_t LATENCY = tCXL;
+        uint64_t LATENCY = 0;
+        if (DRAM_CXL_MEMSYS && read_channel > 0) {
+            LATENCY += tCXL; // It's a CXL channel, add interface delay
+        }
         if (row_buffer_hit)  
-            LATENCY = tCAS;
+            LATENCY += tCAS;
         else 
-            LATENCY = tRP + tRCD + tCAS;
+            LATENCY += tRP + tRCD + tCAS;
 
         uint64_t op_addr = queue->entry[oldest_index].address;
         uint32_t op_cpu = queue->entry[oldest_index].cpu,
@@ -285,7 +298,8 @@ void MEMORY_CONTROLLER::schedule(PACKET_QUEUE *queue)
         cout << " index: " << oldest_index << " occupancy: " << queue->occupancy;
         cout << " ch: " << op_channel << " rank: " << op_rank << " bank: " << op_bank; // wrong from here
         cout << " row: " << op_row << " col: " << op_column;
-        cout << " current: " << current_core_cycle[op_cpu] << " event: " << queue->entry[oldest_index].event_cycle << endl; });
+        cout << " current: " << current_core_cycle[op_cpu] << " event: " << queue->entry[oldest_index].event_cycle << endl; 
+        });
     }
 }
 
@@ -648,6 +662,14 @@ int MEMORY_CONTROLLER::check_dram_queue(PACKET_QUEUE *queue, PACKET *packet)
 
 uint32_t MEMORY_CONTROLLER::dram_get_channel(uint64_t address)
 {
+    if (DRAM_CXL_MEMSYS) {
+        if (address < DRAM_CXL_MIN_ADDR) {
+            return 0; // access is to DDR channel -> go to Ch0
+        }
+        else {
+            return ((address%3) + 1); // access is to CXL channel -> interleave across Ch1 to Ch3
+        }
+    }
     if (LOG2_DRAM_CHANNELS == 0)
         return 0;
 
@@ -658,6 +680,12 @@ uint32_t MEMORY_CONTROLLER::dram_get_channel(uint64_t address)
 
 uint32_t MEMORY_CONTROLLER::dram_get_bank(uint64_t address)
 {
+    if (DRAM_CXL_MEMSYS) {
+        if (address >= DRAM_CXL_MIN_ADDR) {
+            address = address/3;
+        }
+        return (uint32_t) (address & (DRAM_BANKS - 1)); 
+    }
     if (LOG2_DRAM_BANKS == 0)
         return 0;
 
@@ -668,6 +696,12 @@ uint32_t MEMORY_CONTROLLER::dram_get_bank(uint64_t address)
 
 uint32_t MEMORY_CONTROLLER::dram_get_column(uint64_t address)
 {
+    if (DRAM_CXL_MEMSYS) {
+        if (address >= DRAM_CXL_MIN_ADDR) {
+            address = address/3;
+        }
+        return (uint32_t) (address >> LOG2_DRAM_BANKS) & (DRAM_COLUMNS - 1); 
+    }
     if (LOG2_DRAM_COLUMNS == 0)
         return 0;
 
@@ -678,6 +712,12 @@ uint32_t MEMORY_CONTROLLER::dram_get_column(uint64_t address)
 
 uint32_t MEMORY_CONTROLLER::dram_get_rank(uint64_t address)
 {
+    if (DRAM_CXL_MEMSYS) {
+        if (address >= DRAM_CXL_MIN_ADDR) {
+            address = address/3;
+        }
+        return (uint32_t) (address >> (LOG2_DRAM_COLUMNS + LOG2_DRAM_BANKS)) & (DRAM_COLUMNS - 1); 
+    }
     if (LOG2_DRAM_RANKS == 0)
         return 0;
 
@@ -688,6 +728,13 @@ uint32_t MEMORY_CONTROLLER::dram_get_rank(uint64_t address)
 
 uint32_t MEMORY_CONTROLLER::dram_get_row(uint64_t address)
 {
+    if (DRAM_CXL_MEMSYS) {
+        if (address >= DRAM_CXL_MIN_ADDR) {
+            address = address/3;
+        }
+        return (uint32_t) (address >> (LOG2_DRAM_RANKS + LOG2_DRAM_COLUMNS + LOG2_DRAM_BANKS)) 
+                            & (DRAM_COLUMNS - 1); 
+    }
     if (LOG2_DRAM_ROWS == 0)
         return 0;
 

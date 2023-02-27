@@ -13,7 +13,8 @@
 
 extern uint32_t tRP,  // Row Precharge (RP) latency
                 tRCD, // Row address to Column address (RCD) latency
-                tCAS; // Column Address Strobe (CAS) latency
+                tCAS, // Column Address Strobe (CAS) latency
+                tCXL; // CXL interface latency
 
 extern uint64_t l2pf_access;
 

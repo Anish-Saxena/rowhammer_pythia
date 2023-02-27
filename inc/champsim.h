@@ -72,6 +72,9 @@
 //#define DRAM_PAGES 10
 #define DRAM_BW_LEVELS 4
 
+#define DRAM_CXL_MEMSYS 0 // enable hybrid memory system with CXL
+#define DRAM_CXL_MIN_ADDR (uint64_t(DRAM_SIZE)*1024*1024/(4*BLOCK_SIZE)) // First block in CXL addr space
+
 using namespace std;
 
 extern uint8_t warmup_complete[NUM_CPUS], 
