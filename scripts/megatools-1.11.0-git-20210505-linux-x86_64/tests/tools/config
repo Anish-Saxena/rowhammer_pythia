@@ -1,4 +1,0 @@
-export PATH="../../tools:$PATH"
-
-OPTS="--config=.megarc --debug=api"
-ROPTS="--reload $OPTS"
