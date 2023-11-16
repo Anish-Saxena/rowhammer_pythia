@@ -7,16 +7,29 @@
 bin/
 obj/
 
+# ChampSim directories
+branch/
+docs/
+inc/
+prefetcher/
+src/
+replacement/
+tracer/
+
 # Traces
 dpc3_traces/
 traces/
 cvp1_traces/
 
-# Run directory
-runs/
+# Experiments
+experiments/*Sim/
+experiments/old_experiments/
+DDR5_baseline*
+core.*
+*4T_base/
 
 # Others  
-tracer/obj-intel64/
 tags
 *.out
+*.err
 libbf/

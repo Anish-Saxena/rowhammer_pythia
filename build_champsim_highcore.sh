@@ -1,9 +1,9 @@
 #!/bin/bash
 
-if [ "$#" -ne 4 ]; then
+if [ "$#" -ne 5 ]; then
     echo "Illegal number of parameters"
     #echo "Usage: ./build_champsim.sh [branch_pred] [l1d_pref] [l2c_pref] [llc_pref] [llc_repl] [num_core]"
-    echo "Usage: ./build_champsim.sh [l1d_pref] [l2c_pref] [llc_pref] [num_core]"
+    echo "Usage: ./build_champsim.sh [l1d_pref] [l2c_pref] [llc_pref] [num_core] [config]"
     exit 1
 fi
 
@@ -14,6 +14,7 @@ L2C_PREFETCHER=$2   # prefetcher/*.l2c_pref
 LLC_PREFETCHER=$3   # prefetcher/*.llc_pref
 #LLC_REPLACEMENT=$5  # replacement/*.llc_repl
 NUM_CORE=$4         # tested up to 8-core system
+CONFIG=$5           # CXL studies -- memsys config
 
 ############## Some useful macros ###############
 BOLD=$(tput bold)
@@ -75,10 +76,22 @@ if [ "$NUM_CORE" -lt "6" ]; then
 	exit 1
 fi
 
+sed -i.bak 's/\<NUM_CPUS 1\>/NUM_CPUS '${NUM_CORE}'/g' inc/champsim.h
+
+echo "Before changing configuration"
+cat inc/champsim.h | grep "DRAM_CHANNELS"
+
 # Check for multi-core
-if [ "$NUM_CORE" -gt "1" ]; then
+if [ "$CONFIG" = "base_DDR" ]; then
+    echo "[CXL STUDY] Building baseline with 2 DDR channels..."
+    sed -i.bak 's/\<DRAM_CHANNELS 1\>/DRAM_CHANNELS 2/g' inc/champsim.h
+    sed -i.bak 's/\<LOG2_DRAM_CHANNELS 0\>/LOG2_DRAM_CHANNELS 1/g' inc/champsim.h
+elif [ "$CONFIG" = "upper_bound_DDR" ]; then
+    echo "[CXL STUDY] Building upper bound with 4 DDR channels..."
+    sed -i.bak 's/\<DRAM_CHANNELS 1\>/DRAM_CHANNELS 4/g' inc/champsim.h
+    sed -i.bak 's/\<LOG2_DRAM_CHANNELS 0\>/LOG2_DRAM_CHANNELS 2/g' inc/champsim.h
+elif [ "$NUM_CORE" -gt "1" ]; then
     echo "Building multi-core ChampSim..."
-    sed -i.bak 's/\<NUM_CPUS 1\>/NUM_CPUS '${NUM_CORE}'/g' inc/champsim.h
     sed -i.bak 's/\<DRAM_CHANNELS 1\>/DRAM_CHANNELS 4/g' inc/champsim.h
     sed -i.bak 's/\<LOG2_DRAM_CHANNELS 0\>/LOG2_DRAM_CHANNELS 2/g' inc/champsim.h
 else
@@ -89,7 +102,8 @@ else
         echo "Building single-core ChampSim..."
     fi
 fi
-echo
+echo "After changing configuration"
+cat inc/champsim.h | grep "DRAM_CHANNELS"
 
 # Change prefetchers and replacement policy
 cp branch/${BRANCH}.bpred branch/branch_predictor.cc
@@ -119,16 +133,29 @@ echo "L2C Prefetcher: ${L2C_PREFETCHER}"
 echo "LLC Prefetcher: ${LLC_PREFETCHER}"
 echo "LLC Replacement: ${LLC_REPLACEMENT}"
 echo "Cores: ${NUM_CORE}"
-BINARY_NAME="${BRANCH}-${L1D_PREFETCHER}-${L2C_PREFETCHER}-${LLC_PREFETCHER}-${LLC_REPLACEMENT}-${NUM_CORE}core"
+BINARY_NAME="${BRANCH}-${L1D_PREFETCHER}-${L2C_PREFETCHER}-${LLC_PREFETCHER}-${LLC_REPLACEMENT}-${NUM_CORE}core-${CONFIG}"
 echo "Binary: bin/${BINARY_NAME}"
 echo ""
 mv bin/champsim bin/${BINARY_NAME}
 
+echo "Before reverting changes"
+cat inc/champsim.h | grep "DRAM_CHANNELS"
 
-# Restore to the default configuration
 sed -i.bak 's/\<NUM_CPUS '${NUM_CORE}'\>/NUM_CPUS 1/g' inc/champsim.h
-sed -i.bak 's/\<DRAM_CHANNELS 4\>/DRAM_CHANNELS 1/g' inc/champsim.h
-sed -i.bak 's/\<LOG2_DRAM_CHANNELS 2\>/LOG2_DRAM_CHANNELS 0/g' inc/champsim.h
+if [ "$CONFIG" = "base_DDR" ]; then
+    sed -i.bak 's/\<DRAM_CHANNELS 2\>/DRAM_CHANNELS 1/g' inc/champsim.h
+    sed -i.bak 's/\<LOG2_DRAM_CHANNELS 1\>/LOG2_DRAM_CHANNELS 0/g' inc/champsim.h
+elif [ "$CONFIG" = "upper_bound_DDR" ]; then
+    echo "[CXL STUDY] Building upper bound with 4 DDR channels..."
+    sed -i.bak 's/\<DRAM_CHANNELS 4\>/DRAM_CHANNELS 1/g' inc/champsim.h
+    sed -i.bak 's/\<LOG2_DRAM_CHANNELS 2\>/LOG2_DRAM_CHANNELS 0/g' inc/champsim.h
+elif [ "$NUM_CORE" -gt "1" ]; then
+    echo "Building multi-core ChampSim..."
+    sed -i.bak 's/\<DRAM_CHANNELS 4\>/DRAM_CHANNELS 1/g' inc/champsim.h
+    sed -i.bak 's/\<LOG2_DRAM_CHANNELS 2\>/LOG2_DRAM_CHANNELS 0/g' inc/champsim.h
+fi
+echo "After reverting changes"
+cat inc/champsim.h | grep "DRAM_CHANNELS"
 
 cp branch/bimodal.bpred branch/branch_predictor.cc
 cp prefetcher/no.l1d_pref prefetcher/l1d_prefetcher.cc

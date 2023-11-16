@@ -28,7 +28,8 @@ void print_dram_config()
         << "min_dram_writes_per_switch " << MIN_DRAM_WRITES_PER_SWITCH << endl
         << "dram_mtps " << DRAM_MTPS << endl
         << "dram_dbus_return_time " << DRAM_DBUS_RETURN_TIME << endl
-        << "tCXL" << tCXL_DRAM_NANOSECONDS << endl
+        << "tCXL " << tCXL_DRAM_NANOSECONDS << endl
+        << "dram_cxl_memsys " << DRAM_CXL_MEMSYS << endl
         << endl;
 }
 
@@ -664,10 +665,12 @@ uint32_t MEMORY_CONTROLLER::dram_get_channel(uint64_t address)
 {
     if (DRAM_CXL_MEMSYS) {
         if (address < DRAM_CXL_MIN_ADDR) {
-            return 0; // access is to DDR channel -> go to Ch0
+            // access is to DDR channel -> go to Ch0
+            return 0;
         }
         else {
-            return ((address%3) + 1); // access is to CXL channel -> interleave across Ch1 to Ch3
+            // access is to CXL channel -> interleave across Ch1 to Ch3
+            return ((address%DRAM_CXL_CHANNELS) + 1); 
         }
     }
     if (LOG2_DRAM_CHANNELS == 0)
@@ -682,7 +685,7 @@ uint32_t MEMORY_CONTROLLER::dram_get_bank(uint64_t address)
 {
     if (DRAM_CXL_MEMSYS) {
         if (address >= DRAM_CXL_MIN_ADDR) {
-            address = address/3;
+            address = address/DRAM_CXL_CHANNELS;
         }
         return (uint32_t) (address & (DRAM_BANKS - 1)); 
     }
@@ -698,7 +701,7 @@ uint32_t MEMORY_CONTROLLER::dram_get_column(uint64_t address)
 {
     if (DRAM_CXL_MEMSYS) {
         if (address >= DRAM_CXL_MIN_ADDR) {
-            address = address/3;
+            address = address/DRAM_CXL_CHANNELS;
         }
         return (uint32_t) (address >> LOG2_DRAM_BANKS) & (DRAM_COLUMNS - 1); 
     }
@@ -714,7 +717,7 @@ uint32_t MEMORY_CONTROLLER::dram_get_rank(uint64_t address)
 {
     if (DRAM_CXL_MEMSYS) {
         if (address >= DRAM_CXL_MIN_ADDR) {
-            address = address/3;
+            address = address/DRAM_CXL_CHANNELS;
         }
         return (uint32_t) (address >> (LOG2_DRAM_COLUMNS + LOG2_DRAM_BANKS)) & (DRAM_COLUMNS - 1); 
     }
@@ -730,7 +733,7 @@ uint32_t MEMORY_CONTROLLER::dram_get_row(uint64_t address)
 {
     if (DRAM_CXL_MEMSYS) {
         if (address >= DRAM_CXL_MIN_ADDR) {
-            address = address/3;
+            address = address/DRAM_CXL_CHANNELS;
         }
         return (uint32_t) (address >> (LOG2_DRAM_RANKS + LOG2_DRAM_COLUMNS + LOG2_DRAM_BANKS)) 
                             & (DRAM_COLUMNS - 1); 

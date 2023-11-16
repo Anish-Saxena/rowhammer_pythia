@@ -11,7 +11,7 @@ use vars qw($a $b %fields);
 
 use parent qw(Statistics::Descriptive::Sparse);
 
-use List::MoreUtils ();
+# use List::MoreUtils ();
 use List::Util ();
 
 ##Create a list of fields not to remove when data is updated
@@ -265,6 +265,17 @@ sub get_smoothed_data {
     $self->{_smoother}->get_smoothed_data();
 }
 
+sub firstidx (&@)
+{
+    my $f = shift;
+    foreach my $i (0 .. $#_)
+    {
+        local *_ = \$_[$i];
+        return $i if $f->();
+    }
+    return -1;
+}
+
 sub maxdex {
     my $self = shift;
 
@@ -276,7 +287,7 @@ sub maxdex {
     }
     else {
         my $max = $self->max;
-        $maxdex =  List::MoreUtils::first_index {$_ == $max} $self->get_data;
+        $maxdex =  firstidx {$_ == $max} $self->get_data;
     }
 
     $self->{maxdex} = $maxdex;
@@ -297,7 +308,7 @@ sub mindex {
     }
     else {
         my $min = $self->min;
-        $mindex = List::MoreUtils::first_index {$_ == $min} $self->get_data;
+        $mindex = firstidx {$_ == $min} $self->get_data;
     }
 
     $self->{mindex} = $mindex;

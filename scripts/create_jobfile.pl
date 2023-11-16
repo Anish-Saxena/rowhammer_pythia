@@ -91,6 +91,8 @@ foreach $trace (@trace_info)
 		my $trace_input = $trace->{"TRACE"};
 		my $trace_knobs = $trace->{"KNOBS"};
 
+		print "mkdir -p ./${trace_name}_${exp_name} && cd ./${trace_name}_${exp_name}\n";
+
 		my $cmdline;
 		if($local)
 		{
@@ -112,6 +114,7 @@ foreach $trace (@trace_info)
 				$slurm_cmd = $slurm_cmd." $extra";
 			}
 			$slurm_cmd = $slurm_cmd." -c $ncores -J ${trace_name}_${exp_name} -o ${trace_name}_${exp_name}.out -e ${trace_name}_${exp_name}.err";
+			# $cmdline = "$slurm_cmd $ENV{'PYTHIA_HOME'}/wrapper.sh $exe \"$exp_knobs $trace_knobs -traces $trace_input \" &";
 			$cmdline = "$slurm_cmd $ENV{'PYTHIA_HOME'}/wrapper.sh $exe \"$exp_knobs $trace_knobs -traces $trace_input \" &";
 		}
 		
@@ -122,6 +125,8 @@ foreach $trace (@trace_info)
 		$cmdline =~ s/\$\(NCORES\)/$ncores/g;
 		
 		print "$cmdline\n";
+
+		print "cd ../\n";
 	}
 }
 

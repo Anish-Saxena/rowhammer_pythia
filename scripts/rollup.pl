@@ -54,6 +54,9 @@ for $trace (@trace_info)
 		my $log_file = "${trace_name}_${exp_name}.${ext}";
 		my @metric_values;
 		my %records;
+		$records{"MISS"} = 0;
+		$records{"LLC_TOTAL_ACESS"} = 0;
+		$records{"LLC_WRITEBACK_ACESS"} = 0;
 
 		if (-e $log_file)
 		{
@@ -70,18 +73,43 @@ for $trace (@trace_info)
 				}
 				else
 				{
-					my $space_count = () = $line =~ / /g;
+					my $space_count = () = $line =~ /: /g;
+					if ($space_count == 3)
+					{
+						my ($key, $value) = split /: /, $line;
+						$key = trim($key);
+						$value = trim(split(/ /,$value));
+						$records{$key} = $value;
+						if ($key eq "LLC TOTAL     ACCESS")
+						{
+							my @vals = split /(\d+)/, $line;
+							# print join("-", @vals);
+							$records{"LLC_TOTAL_ACCESS"} += $vals[1];
+						}
+						if ($key eq "LLC WRITEBACK ACCESS")
+						{
+							my @vals = split /(\d+)/, $line;
+							$records{"LLC_WRITEBACK_ACCESS"} += $vals[1];
+						}
+					}
+					elsif ($space_count == 2)
+					{
+						my ($key, $value) = split /: /, $line;
+						$key = trim($key);
+						$value = trim(split(/ /,$value));
+						$records{$key} = $value;
+					}
+					$space_count = () = $line  =~ / /g;
 					if ($space_count == 1)
 					{
 						my ($key, $value) = split / /, $line;
 						$key = trim($key);
-						$value = trim($value);
-						$records{$key} = $value;						
+						$value = trim(split(/ /,$value));
+						$records{$key} = $value;
 					}
 				}
 			}
 			close($fh);
-
 			for $metric (@m_info)
 			{
 				$metric_name = $metric->{"NAME"};
