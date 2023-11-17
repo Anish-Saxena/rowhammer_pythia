@@ -81,6 +81,8 @@ print "#\n";
 print "#\n";
 print "#\n";
 
+print "export LD_LIBRARY_PATH=/home/anish/start_hpca24_ae/dramsim3/:\$LD_LIBRARY_PATH\n\n";
+
 foreach $trace (@trace_info)
 {
 	foreach $exp (@exp_info)
