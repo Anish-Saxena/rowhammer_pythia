@@ -6,7 +6,7 @@ This repository is part of the evaluation artifact for the [START](https://arxiv
 
 Experiments in the START paper are conducted using [ChampSim](https://github.com/ChampSim/ChampSim), a cycle-level multi-core simulator, interfaced with [DRAMSim3](https://github.com/umd-memsys/DRAMsim3), a detailed memory system simulator. The trace download and jobfile management is borrowed from the infrastructure used in [Pythia](https://github.com/CMU-SAFARI/Pythia). Accordingly, the code and experimentation framework of START has been partitioned into 3 repositories for modularity. 
 
-This repository hosts the ChampSim simulator codebase for START, Hydra, and Ideal trackers using victim-refresh mitigation with configurable blast-radius. 
+This repository hosts the experimental workflow (experiment directories, jobfiles, stat collection, etc.) adopted from Pythia.
 
 **NOTE:** The documentation is common across all 3 repositories, so feel free to start here.
 
