@@ -1,240 +1,155 @@
-<p align="center">
-  <a href="https://github.com/CMU-SAFARI/Pythia">
-    <img src="logo.png" alt="Logo" width="424.8" height="120">
-  </a>
-  <h3 align="center">A Customizable Hardware Prefetching Framework Using Online Reinforcement Learning
-  </h3>
-</p>
+# START: Scalable Tracking for Any Rowhammer Threshold
 
-<p align="center">
-    <a href="https://github.com/CMU-SAFARI/Pythia/blob/master/LICENSE">
-        <img alt="GitHub" src="https://img.shields.io/badge/License-MIT-yellow.svg">
-    </a>
-    <a href="https://github.com/CMU-SAFARI/Pythia/releases">
-        <img alt="GitHub release" src="https://img.shields.io/github/release/CMU-SAFARI/Pythia">
-    </a>
-    <a href="https://doi.org/10.5281/zenodo.5520125"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.5520125.svg" alt="DOI"></a>
-</p>
+This repository is part of the evaluation artifact for the [START](https://arxiv.org/abs/2308.14889) paper, which will appear at [HPCA 2024](https://www.hpca-conf.org/2024/). 
 
-<!-- ## Update
-### Aug 13th, 2021
-It has been brought to our attention that the Ligra and PARSEC-2.1 traces required to evaluate the artifact are not correctly getting downloaded using the `download_traces.pl` script. For now, we ask the reader to download **all** Ligra and PARSEC-2.1 traces (~10 GB) by (1) clicking on the mega link (see [Section 5](https://github.com/CMU-SAFARI/Pythia#more-traces)), and (2) clicking on "Download as ZIP" option. We are working with megatools developer to resolve the issue soon.  -->
+## Introduction
 
-<details open="open">
-  <summary>Table of Contents</summary>
-  <ol>
-    <li><a href="#what-is-pythia">What is Pythia?</a></li>
-    <li><a href="#about-the-framework">About the Framework</a></li>
-    <li><a href="#prerequisites">Prerequisites</a></li>
-    <li><a href="#installation">Installation</a></li>
-    <li><a href="#preparing-traces">Preparing Traces</a></li>
-    <ul>
-      <li><a href="#more-traces">More Traces</a></li>
-    </ul>
-    <li><a href="#experimental-workflow">Experimental Workflow</a></li>
-      <ul>
-        <li><a href="#launching-experiments">Launching Experiments</a></li>
-        <li><a href="#rolling-up-statistics">Rolling up Statistics</a></li>
-      </ul>
-    </li>
-    <li><a href="#hdl-implementation">HDL Implementation</a></li>
-    <li><a href="#code-walkthrough">Code Walkthrough</a></li>
-    <li><a href="#citation">Citation</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgements">Acknowledgements</a></li>
-  </ol>
-</details>
+Experiments in the START paper are conducted using [ChampSim](https://github.com/ChampSim/ChampSim), a cycle-level multi-core simulator, interfaced with [DRAMSim3](https://github.com/umd-memsys/DRAMsim3), a detailed memory system simulator. The trace download and jobfile management is borrowed from the infrastructure used in [Pythia](https://github.com/CMU-SAFARI/Pythia). Accordingly, the code and experimentation framework of START has been partitioned into 3 repositories for modularity. 
 
-## What is Pythia?
+This repository hosts the ChampSim simulator codebase for START, Hydra, and Ideal trackers using victim-refresh mitigation with configurable blast-radius. 
 
-> Pythia is a hardware-realizable, light-weight data prefetcher that uses reinforcement learning to generate accurate, timely, and system-aware prefetch requests. 
+**NOTE:** The documentation is common across all 3 repositories, so feel free to start here.
 
-Pythia formulates hardware prefetching as a reinforcement learning task. For every demand request, Pythia observes multiple different types of program context information to take a prefetch decision. For every prefetch decision, Pythia receives a numerical reward that evaluates prefetch quality under the current memory bandwidth utilization. Pythia uses this reward to reinforce the correlation between program context information and prefetch decision to generate highly accurate, timely, and system-aware prefetch requests in the future.
+## System Requirements
 
-## About The Framework
+   - **SW Dependencies** 
+     - Tested with cmake v3.23.1, g++ v10.3.0, md5sum v8.22, perl v5.16.3, megatools 1.11.0, and Python XYZ.
+   - **Benchmark Dependencies** 
+     - Publicly available ChampSim-compatible traces of SPEC2017, LIGRA, PARSEC, and CloudSuite workloads.
+   - **HW Dependencies** 
+     - A scale-out system like many-core server or HPC cluster.
+     - Our experiments were performed on the [PACE](https://pace.gatech.edu) cluster at Georgia Tech.
+     - Most configurations run simulations for 28 workloads for about 6 hours on average (with one workload per core). Some configurations run 51 workloads per configurations.
+     - Overall, there are 48 configurations, requiring about 9,000 core-hours to replicate all results (about 1-2 days on four 64-core servers).
 
-Pythia is implemented in [ChampSim simulator](https://github.com/ChampSim/ChampSim). We have significantly modified the prefetcher integration pipeline in ChampSim to add support to a wide range of prior prefetching proposals mentioned below:
+**NOTE:** If compute resources are limited, we consider the key results of the paper to be those displayed in Figure 6, 7, 8, 13, 14, and 16, which corresponds to 16 configurations, requiring about 3,600 core-hours (about 1-2 days on a 64-core server).
 
-* Stride [Fu+, MICRO'92]
-* Streamer [Chen and Baer, IEEE TC'95]
-* SMS [Somogyi+, ISCA'06]
-* AMPM [Ishii+, ICS'09]
-* Sandbox [Pugsley+, HPCA'14]
-* BOP [Michaud, HPCA'16]
-* SPP [Kim+, MICRO'16]
-* Bingo [Bakshalipour+, HPCA'19]
-* SPP+PPF [Bhatia+, ISCA'19]
-* DSPatch [Bera+, MICRO'19]
-* MLOP [Shakerinava+, DPC-3'19]
-* IPCP [Pakalapati+, ISCA'20]
+## Compilation Steps
 
-Most of the  prefetchers (e.g., SPP [1], Bingo [2], IPCP [3]) reuse codes from [2nd]() and [3rd]() data prefetching championships (DPC). Others (e.g., AMPM [4], SMS [5]) are implemented from scratch and shows similar relative performance reported by previous works.
+The expected directory structure is:
 
-## Prerequisites
+```
+start_hpca24_ae
+|-dramsim3
+|-champsim
+|-experiments
+```
 
-The infrastructure has been tested with the following system configuration:
-  * G++ v6.3.0 20170516
-  * CMake v3.20.2
-  * md5sum v8.26
-  * Perl v5.24.1
-  * [Megatools 1.11.0](https://megatools.megous.com) (Note that v1.9.98 does **NOT** work)
+* `mkdir start_hpca24_ae`
 
-## Installation
+### Build DRAMSim3
 
-0. Install necessary prequisites
-    ```bash
-    sudo apt install perl
-    ```
-1. Clone the GitHub repo
-   
-   ```bash
-   git clone https://github.com/CMU-SAFARI/Pythia.git
-   ```
-2. Clone the bloomfilter library inside Pythia home directory
-   
-   ```bash
-   cd Pythia
-   git clone https://github.com/mavam/libbf.git libbf
-   ```
-3. Build bloomfilter library. This should create the static `libbf.a` library inside `build` directory
-   
-    ```bash
-    cd libbf
-    mkdir build && cd build
-    cmake ../
-    make clean && make
-    ```
-4. Build Pythia for single/multi core using build script. This should create the executable inside `bin` directory.
-   
-   ```bash
-   cd $PYTHIA_HOME
-   # ./build_champsim.sh <l1_pref> <l2_pref> <llc_pref> <ncores>
-   ./build_champsim.sh multi multi no 1
-   ```
-   Please use `build_champsim_highcore.sh` to build ChampSim for more than four cores.
+* `git clone https://github.com/Anish-Saxena/rowhammer_dramsim3 dramsim3`
+* `cd dramsim3`
+* `mkdir build && cd build && cmake ..`
+* `make -j8`
+* `cd ..`
 
-5. _Set appropriate environment variables as follows:_
+### Setup ChampSim Build Environment
 
-    ```bash
-    source setvars.sh
-    ```
+* `git clone https://github.com/Anish-Saxena/rowhammer_champsim champsim`
+* `cd champsim`
+*  `./set_paths.sh`
 
-## Preparing Traces
-0. Install the megatools executable
+### Compile One Configuration for Testing
 
-    ```bash
-    export PYTHIA_HOME=/home/lisa/Pythia/
-    cd $PYTHIA_HOME/scripts
-    <!-- wget https://megatools.megous.com/builds/experimental/megatools-1.11.0-git-20220401-linux-x86_64.tar.gz -->
-    wget https://megatools.megous.com/builds/megatools-1.11.0.20220519.tar.gz
-    tar -xvf megatools-1.11.0.20220519.tar.gz
-    ```
-> Note: The megatools link might change in the future depending on latest release. Please recheck the link if the download fails.
+* `./config.py configs/8C_16W.json`
+* `make -j8`
+* `cd ..`
 
-1. Use the `download_traces.pl` perl script to download necessary ChampSim traces used in our paper.
+Ensure that the compilation completes without error. 
 
-    ```bash
-    mkdir $PYTHIA_HOME/traces/
-    cd $PYTHIA_HOME/scripts/
-    perl download_traces.pl --csv artifact_traces.csv --dir ../traces/
-    ```
-> Note: The script should download **233** traces. Please check the final log for any incomplete downloads. The total size of all traces would be **~52 GB**.
+**Common Error**: The compiler may not be able to link the dramsim3 library. If so, check that the path is correctly set in `config.py` (search for LDLIBS). 
 
-2. Once the trace download completes, please verify the checksum as follows. _Please make sure all traces pass the checksum test._
+### Download Traces
 
-    ```bash
-    cd $PYTHIA_HOME/traces
-    md5sum -c ../scripts/artifact_traces.md5
-    ```
+* `git clone https://github.com/Anish-Saxena/rowhammer_pythia experiments`
+* `cd experiments`
+* `source setvars.sh`
+* `mkdir traces`
+* `cd scripts/`
+* `perl download_traces.pl --csv START_traces.csv --dir ../traces/`
+* `cd ../traces/`
+* `md5sum -c ../scripts/START_traces.md5`
+* `cd ../../`
 
-3. If the traces are downloaded in some other path, please change the full path in `experiments/MICRO21_1C.tlist` and `experiments/MICRO21_4C.tlist` accordingly.
+The 44 traces might take an hour or more to download, depending both on the host network bandwidth and bandwidth allocation provided by Megatools (for LIGRA and PARSEC traces). Ensure that the checksum passes for all traces.
 
-### More Traces
-1. We are also releasing a new set of ChampSim traces from [PARSEC 2.1](https://parsec.cs.princeton.edu) and [Ligra](https://github.com/jshun/ligra). The trace drop-points are measured using [Intel Pinplay](https://software.intel.com/content/www/us/en/develop/articles/program-recordreplay-toolkit.html) and the traces are captured by the ChampSim PIN tool. The traces can be found in the following links. To download these traces in bulk, please use the "Download as ZIP" option from mega.io web-interface.
-      * PARSEC-2.1: https://bit.ly/champsim-parsec2
-      * Ligra: https://bit.ly/champsim-ligra
-   
-2. Our simulation infrastructure is completely compatible with all prior ChampSim traces used in CRC-2 and DPC-3. One can also convert the CVP-2 traces (courtesy of Qualcomm Datacenter Technologies) to ChampSim format using [the following converter](https://github.com/ChampSim/ChampSim/tree/master/cvp_tracer). The traces can be found in the follwing websites:
-     * CRC-2 traces: http://bit.ly/2t2nkUj
-     * DPC-3 traces: http://hpca23.cse.tamu.edu/champsim-traces/speccpu/
-     * CVP-2 traces: https://www.microarch.org/cvp1/cvp2/rules.html
+**Common Error**: If Megatools does not work, download the latest megatools utility for the relevant platform from [Megatools Builds](https://megatools.megous.com/builds/builds/), untar it (`tar -xvf <filename`), and update the `megatool_exe` parameter in `download_traces.pl`.
+
+### Update LD_LIBARY_PATH
+
+DRAMSim3 is loaded as a dynamically linked library and requires updating `LD_LIBRARY_PATH` variable. We recommend appending the updated variable to `bashrc` as well as all job-files used to launch experiments.
+
+- Update `LD_LIBRARY_PATH` in current terminal session: `export LD_LIBRARY_PATH=<path-to-dramsim3-directory>:$LD_LIBRARY_PATH`
+- Append updated variable to bashrc: `echo "export LD_LIBRARY_PATH=<path-to-dramsim3-directory>:$LD_LIBRARY_PATH" >> ~/.bashrc`
+
+### Test Setup with Dummy Run
+
+* `cd champsim`
+* `./test_setup.sh`
+
+Running this trace for 100K warmup and 100K simulation instructions should take about a minute. Ensure that the simulation completes successfully; you will see the message `SETUP TESTED SUCCESSFULLY` at the end of the output.
+
+**Common Error:** If the loader is unable to find the dramsim3 library, please ensure the updated `LD_LIBRARY_PATH` variable is available in the execution environment (for example, if srun-like commands are used). 
 
 ## Experimental Workflow
-Our experimental workflow consists of two stages: (1) launching experiments, and (2) rolling up statistics from experiment outputs.
 
-### Launching Experiments
-1. To create necessary experiment commands in bulk, we will use `scripts/create_jobfile.pl`
-2. `create_jobfile.pl` requires three necessary arguments:
-      * `exe`: the full path of the executable to run
-      * `tlist`: contains trace definitions
-      * `exp`: contains knobs of the experiements to run
-3. Create experiments as follows. _Please make sure the paths used in tlist and exp files are appropriate_.
-   
-      ```bash
-      cd $PYTHIA_HOME/experiments/
-      perl ../scripts/create_jobfile.pl --exe $PYTHIA_HOME/bin/perceptron-multi-multi-no-ship-1core --tlist MICRO21_1C.tlist --exp MICRO21_1C.exp --local 1 > jobfile.sh
-      ```
+START adopts [Pythia's](https://github.com/CMU-SAFARI/Pythia) experimental workflow by launching experiments preferably on an HPC compute cluster followed by rolling up statistics.
 
-4. Go to a run directory (or create one) inside `experiements` to launch runs in the following way:
-      ```bash
-      cd experiments_1C
-      source ../jobfile.sh
-      ```
+Each configuration runs either 28 workloads (used in the main apper) or all 51 workloads (used in appendix). Overall, there are 48 configurations required to recreate all figures in the paper, and 16 configurations to recreate the representative figures.
 
-5. If you have [slurm](https://slurm.schedmd.com) support to launch multiple jobs in a compute cluster, please provide `--local 0` to `create_jobfile.pl`
+### Build ChampSim Configurations
 
-### Rolling-up Statistics
-1. To rollup stats in bulk, we will use `scripts/rollup.pl`
-2. `rollup.pl` requires three necessary arguments:
-      * `tlist`
-      * `exp`
-      * `mfile`: specifies stat names and reduction method to rollup
-3. Rollup statistics as follows. _Please make sure the paths used in tlist and exp files are appropriate_.
-   
-      ```bash
-      cd experiements_1C/
-      perl ../../scripts/rollup.pl --tlist ../MICRO21_1C.tlist --exp ../MICRO21_1C.exp --mfile ../rollup_1C_base_config.mfile > rollup.csv
-      ```
+1. `cd champsim`
+2. If recreating all figures, `./build_configs.sh configs/all_figures.configs`. Otherwise, `./build_configs.sh configs/representative_figures.configs`.
 
-4. Export the `rollup.csv` file in you favourite data processor (Python Pandas, Excel, Numbers, etc.) to gain insights.
+### Launch Experiments
 
-## HDL Implementation
-We also implement Pythia in [Chisel HDL](https://www.chisel-lang.org) to faithfully measure the area and power cost. The implementation, along with the reports from umcL65 library, can be found the following GitHub repo. Please note that the area and power projections in the sample report is different than what is reported in the paper due to different technology.
+Recreating all figures requires 1528 experiment runs (each requiring one core and 4GB memory). Recreating representative figures requires 609 experiments runs. Each experiment requires 6 core-hours on average, or about 9K core-hours to recreate all experiments and 3.6K core-hours to recreate representative experiments. 
 
-<p align="center">
-<a href="https://github.com/CMU-SAFARI/Pythia-HDL">Pythia-HDL</a>
-    <a href="https://github.com/CMU-SAFARI/Pythia-HDL">
-        <img alt="Build" src="https://github.com/CMU-SAFARI/Pythia-HDL/actions/workflows/test.yml/badge.svg">
-    </a>
-</p>
+1. Select whether you will recreate all figures or only representative figures and check out `experiments/experiments/all_figures/` or `experiments/experiments/representative_figures/` directory, respectively. 
+2. The `configure.csv` file provides details about each configuration (best viewed in Google Sheets/ Excel).
 
-## Code Walkthrough
-> Pythia was code-named Scooby (the mistery-solving dog) during the developement. So any mention of Scooby anywhere in the code inadvertently means Pythia.
+The directories for each required configuration have already been set up. Next, make any changes necessary to run the configuration on your machine. **Refer to options below before proceeding to next steps.**
 
-* The top-level files for Pythia are `prefetchers/scooby.cc` and `inc/scooby.h`. These two files declare and define the high-level functions for Pythia (e.g., `invoke_prefetcher`, `register_fill`, etc.). 
-* The released version of Pythia has two types of RL engine defined: _basic_ and _featurewise_. They differ only in terms of the QVStore organization (please refer to our [paper](arxiv.org/pdf/2109.12021.pdf) to know more about QVStore). The QVStore for _basic_ version is simply defined as a two-dimensional table, whereas the _featurewise_ version defines it as a hierarchichal organization of multiple small tables. The implementation of respective engines can be found in `src/` and `inc/` directories.
-* `inc/feature_knowledge.h` and `src/feature_knowldege.cc` define how to compute each program feature from the raw attributes of a deamand request. If you want to define your own feature, extend the enum `FeatureType` in `inc/feature_knowledge.h` and define its corresponding `process` function.
-* `inc/util.h` and `src/util.cc` contain all hashing functions used in our evaluation. Play around with them, as a better hash function can also provide performance benefits.
+#### Option-1: Using Slurm
 
-## Citation
-If you use this framework, please cite the following paper:
-```
-@inproceedings{bera2021,
-  author = {Bera, Rahul and Kanellopoulos, Konstantinos and Nori, Anant V. and Shahroodi, Taha and Subramoney, Sreenivas and Mutlu, Onur},
-  title = {{Pythia: A Customizable Hardware Prefetching Framework Using Online Reinforcement Learning}},
-  booktitle = {Proceedings of the 54th Annual IEEE/ACM International Symposium on Microarchitecture},
-  year = {2021}
-}
-```
+The sample jobfile within each directory assumes usage of `slurm` scheduler (typically when using an HPC cluster). For each configuration, the only difference in jobfiles is the ChampSim binary used, so all jobfiles are created using the following 3 jobfiles:
 
-## License
+- `experiments/experiments/1C_all_workloads.sh`: Baseline single-core experiments used to compute weighted speedup. 44 workloads.
+- `experiments/experiments/single_workloads.sh`: Multi-core experiments with same workload on each core. 28 workloads.
+- `experiments/experiments/all_workloads.sh`: All multi-core experiments (single, mixed, cloudsuite). 51 workloads.
 
-Distributed under the MIT License. See `LICENSE` for more information.
+We recommend making any changes to these three jobfiles (such as specifying the charge account for `slurm`, etc.), as required. Alternatively, try running a jobfile inside a directory within `experiments/experiments/all_figures/` to ensure it works (for example, `cd 8C_16WLLC && sbatch jobfile.sh`).
 
-## Contact
+#### Option-2: Running Locally
 
-Rahul Bera - write2bera@gmail.com
+Similar to the `slurm` option, we provide three jobfiles from which all configuration jobfiles can be derived:
 
-## Acknowledgements
-We acklowledge support from SAFARI Research Group's industrial partners.
+- `experiments/experiments/1C_all_workloads.local.sh`: Baseline single-core experiments used to compute weighted speedup. 44 workloads.
+- `experiments/experiments/single_workloads.local.sh`: Multi-core experiments with same workload on each core. 28 workloads.
+- `experiments/experiments/all_workloads.local.sh`: All multi-core experiments (single, mixed, cloudsuite). 51 workloads.
+
+We recommend making any changes to these three jobfiles as required. Alternatively, try running a jobfile inside a directory within `experiments/experiments/all_figures/` to ensure it works (for example, `cd 8C_16WLLC && ./jobfile.sh`).
+
+#### Option-3: Create Your Own Jobfiles
+
+Please customize `create_jobfile.pl` to create jobfiles to the format needed for launching experiments on your machine. Create the new jobfile comprising all experiments using the following command:
+
+`perl ../scripts/create_jobfile.pl --exe $PYTHIA_HOME/../champsim/bin/8C_16WLLC --tlist START_8C_ALL.tlist --exp START.exp --local 1 > single_workloads.local.sh`
+
+Note that you need to create jobfiles for 8-core all-workloads (`START_8C_ALL.tlist`), 8-core single-workloads (`START_8C_SINGLE.tlist`), and 1-core all-workloads (`START_1C_ALL.tlist`). Be sure to following the jobfile naming convention discussed in Option-2. 
+
+**After referring to options above, proceed with launching experiments below.**
+
+3. After making changes, run `./setup_exps.sh` to recreate jobfiles for all configurations.
+
+4. Finally, launch experiments. 
+    * **Option-1**: We provide a helper script `launch_exps.sh` that launches all experiments using the `sbatch` command. 
+    * **Option-2 or 3**: If running locally, please launch each configuration manually and ensure number of running experiments are less than number of cores at any given time (otherwise context switches can degrade performance).
+
+
+## Collect Statistics
+
+Work-in-progress. 

@@ -6,6 +6,8 @@ do
     bin=`echo $line | awk '{print $2}'`
     bmks=`echo $line | awk '{print $3}'`
     if [[ "$bin" == "1C_16WLLC" ]]; then
+        mkdir -p 1C_16WLLC
+        cp ../1C_all_workloads.sh 1C_16WLLC/jobfile.sh
         continue
     fi
     echo $dir " -> " $bin
