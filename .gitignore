@@ -29,6 +29,7 @@ core.*
 *4T_base/
 
 # Others  
+graphs/stat_scripts/extras/
 tags
 *.out
 *.err
