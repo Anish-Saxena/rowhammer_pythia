@@ -15,6 +15,7 @@ prefetcher/
 src/
 replacement/
 tracer/
+config/
 
 # Traces
 dpc3_traces/
