@@ -1,7 +1,6 @@
 workload	name
 fotonik3d	649.fotonik3d_s-10881B.champsimtrace.xz
 mcf	605.mcf_s-994B.champsimtrace.xz
-lbm	619.lbm_s-3766B.champsimtrace.xz
 gcc	602.gcc_s-1850B.champsimtrace.xz
 omnetpp	620.omnetpp_s-141B.champsimtrace.xz
 bwaves	603.bwaves_s-2931B.champsimtrace.xz
@@ -9,7 +8,6 @@ roms	654.roms_s-1007B.champsimtrace.xz
 cactuBSSN	607.cactuBSSN_s-2421B.champsimtrace.xz
 wrf	621.wrf_s-6673B.champsimtrace.xz
 pop2	628.pop2_s-17B.champsimtrace.xz
-cam4	627.cam4_s-573B.champsimtrace.xz
 xalancbmk	623.xalancbmk_s-592B.champsimtrace.xz
 CF	ligra_CF.com-lj.ungraph.gcc_6.3.0_O3.drop_184750M.length_250M.champsimtrace.xz
 BC	ligra_BC.com-lj.ungraph.gcc_6.3.0_O3.drop_26750M.length_250M.champsimtrace.xz
