@@ -141,7 +141,7 @@ Please customize `create_jobfile.pl` to create jobfiles to the format needed for
 
 Note that you need to create jobfiles for 8-core all-workloads (`START_8C_ALL.tlist`), 8-core single-workloads (`START_8C_SINGLE.tlist`), and 1-core all-workloads (`START_1C_ALL.tlist`). Be sure to following the jobfile naming convention discussed in Option-2. 
 
-**After referring to options above, proceed with launching experiments below.**
+**After referring to options above, proceed with launching experiments below.** One required change is updating the paths to champsim binary and traces in all three main jobfiles, and can be done easily with find and replace.
 
 3. After making changes, run `./setup_exps.sh` to recreate jobfiles for all configurations.
 
@@ -152,4 +152,28 @@ Note that you need to create jobfiles for 8-core all-workloads (`START_8C_ALL.tl
 
 ## Collect Statistics
 
-Work-in-progress. 
+**Update 12/1/2023**
+
+We have added parsing scripts for remaining figures 9, 10, and 15. All figures are now reproduceable. 
+
+**Update 11/30/2023**
+
+We added stat collection scripts for Figures 2, 6, 7, 8, 13, 14, and 16 (that is, all representative figures along with motivation figure 2). They are located in `experiments/graphs/stat_scripts/` directory. Please run the script for each figure (`Figure_*.sh`), which will parse and collect relevant statistics (like normalized IPC, relative cache misses, etc.) into csv files stored in `experiments/graphs/stat_scripts/data/` directory.
+
+The scripts assume `reprsentative_figures` are being recreated. If the simulation results are present in `all_figures`, please change the `STAT_DIR` variable in the `Figure_*.sh` scripts. 
+
+We will add parsing scripts for remaining figures shortly.
+
+**Common Error:** If the parsing script (or the python script that is internally called) is unable to locate the relevant file, please ensure the paths traversed by the scripts are correct (especially all the `*_DIR` variables in bash scripts).
+
+## Visualize Results and Recreate Figures
+
+**Update 11/30/2023**
+
+Please find the Jupyter notebook to plot all figures in `experiments/graphs/plotting_nb/` directory. It can be launched using `jupyter-notebook START_plots.ipynb` command. Please be sure the requisite python package are installed, including matplotlib, numpy, pandas, and seaborn. 
+
+After the parsing script for a figure has been run, you can re-run the cell corresponding to that figure to recreate it.
+
+**Common Error:** If there is a key error, please go to the relevant csv and ensure the column names are as expected by the plotting file. Sometimes, the delimiter variable can cause incorrect parsing by Pandas' csv reader, which can be mitigated by using `r'\s+'` as the regex-enabled delimiter. 
+
+Please contact the authors if errors are not resolved.
