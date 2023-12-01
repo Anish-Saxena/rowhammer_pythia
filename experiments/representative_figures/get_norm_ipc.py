@@ -17,6 +17,10 @@ if len(sys.argv) > 2:
 if '512GB' in stat_dir or ('mm' in stat_dir and 'lite' not in stat_dir):
     # print("512GB single core stats used\n\n\n\n")
     base_dir = "./8C_16W_512GB/"
+elif '1.5MB' in stat_dir:
+    base_dir = "./8C_12W_1.5MB/"
+elif '3MB' in stat_dir:
+    base_dir = "./8C_12W_3MB/"
 
 bmks = pd.read_csv("./bmk_1C_names.csv", delimiter='\t')
 

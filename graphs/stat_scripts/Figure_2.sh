@@ -1,6 +1,6 @@
 #!/bin/bash
 
-STAT_DIR="../../experiments/representative_figures/"
+STAT_DIR="../../experiments/all_figures/"
 CURR_DIR=`pwd`
 OUT_FILE="${CURR_DIR}/data/motivation.csv"
 
@@ -72,4 +72,3 @@ HYDRA_T16_MIT=`echo "$HYDRA_T16_ALL $HYDRA_T16_NOMIT" | awk '{print $1-$2}'`
 echo "ALL, T=256", $HYDRA_T256_TRACKING, $HYDRA_T256_MIT  >> ${OUT_FILE}
 echo "ALL, T=64", $HYDRA_T64_TRACKING, $HYDRA_T64_MIT  >> ${OUT_FILE}
 echo "ALL, T=16", $HYDRA_T16_TRACKING, $HYDRA_T16_MIT  >> ${OUT_FILE}
-echo "Done, exiting..."
