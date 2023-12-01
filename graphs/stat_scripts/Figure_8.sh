@@ -1,6 +1,6 @@
 #!/bin/bash
 
-STAT_DIR="../../experiments/8C_200Mn_Sim/"
+STAT_DIR="../../experiments/representative_figures/"
 CURR_DIR=`pwd`
 OUT_FILE="${CURR_DIR}/data/cache_misses.csv"
 
